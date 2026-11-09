@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>Fusion Studio</title>
+<style>
+  body{margin:0;background:#111318;color:#fff;font-family:sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+  .topbar{height:50px;background:#17191f;border-bottom:1px solid #333;display:flex;align-items:center;padding:0 15px;gap:10px}
+  .btn{padding:6px 12px;background:#232630;color:#ccc;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:12px}
+  .btn:hover{background:#333}
+  .btn.primary{background:#7654d8;border-color:#7654d8;color:#fff}
+  .workspace{display:flex;flex:1}
+  .toolbar{width:50px;background:#191b22;border-right:1px solid #333;display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:5px}
+  .tool{width:34px;height:34px;border-radius:5px;background:transparent;color:#888;border:none;cursor:pointer;font-size:18px;display:grid;place-items:center}
+  .tool.active{background:#392e5e;color:#bda9ff}
+  .center{flex:1;display:flex;align-items:center;justify-content:center;background:#15171e;padding:20px}
+  canvas{box-shadow:0 10px 30px #000;border:1px solid #333;background:#000;cursor:crosshair}
+  .right{width:250px;background:#191b22;border-left:1px solid #333;padding:15px}
+  .layer{height:30px;background:#232630;border-radius:4px;margin-bottom:5px;display:flex;align-items:center;padding:0 10px;font-size:12px;cursor:pointer}
+  .layer.selected{background:#302844;color:#e2d8ff}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span style="font-weight:bold;font-size:14px;">FUSION STUDIO</span>
+    <button class="btn" id="newBtn" style="margin-left:auto">Новый холст</button>
+    <button class="btn primary" id="exportBtn">PNG</button>
+  </div>
+  <div class="workspace">
+    <div class="toolbar" id="toolbar"></div>
+    <div class="center">
+      <canvas id="cv" width="960" height="540"></canvas>
+    </div>
+    <div class="right">
+      <h4 style="margin:0 0 10px 0;font-size:12px;color:#888">СЛОИ</h4>
+      <div id="layersList"></div>
+    </div>
+  </div>
+  <!-- Сюда мы будем добавлять скрипты -->
+  <script>
+    // 1. НАСТРОЙКИ
+    const cv = document.getElementById('cv');
+    const ctx = cv.getContext('2d');
+    let tool = 'brush';
+    let brushSize = 10;
+    let color = '#a78bfa';
+    let isDrawing = false;
+    let layers = [];
+    let activeLayerId = null;
+
+    // 2. СОЗДАНИЕ СЛОЯ
+    function createLayer(name) {
+      const c = document.createElement('canvas');
+      c.width = cv.width;
+      c.height = cv.height;
+      return { id: Date.now() + Math.random(), name: name, canvas: c, visible: true };
+    }
+
+    // 3. НОВЫЙ ХОЛСТ
+    function newCanvas(w, h) {
+      cv.width = w; cv.height = h;
+      layers = [createLayer('Фон')];
+      activeLayerId = layers[0].id;
+      updateLayersUI();
+      render();
+    }
+
+    // 4. ОТРИСОВКА
+    function render() {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      ctx.fillStyle = '#20232c';
+      ctx.fillRect(0, 0, cv.width, cv.height);
+      layers.forEach(l => { if (l.visible) ctx.drawImage(l.canvas, 0, 0); });
+    }
+
+    // 5. ПОЛУЧЕНИЕ АКТИВНОГО СЛОЯ
+    function getActiveLayer() {
+      return layers.find(l => l.id === activeLayerId) || layers[0];
+    }
+
+    // 6. ИНТЕРФЕЙС СЛОЕВ
+    function updateLayersUI() {
+      const list = document.getElementById('layersList');
+      list.innerHTML = '';
+      [...layers].reverse().forEach(l => {
+        const el = document.createElement('div');
+        el.className = 'layer' + (l.id === activeLayerId ? ' selected' : '');
+        el.textContent = l.name;
+        el.onclick = () => { activeLayerId = l.id; updateLayersUI(); };
+        list.appendChild(el);
+      });
+    }
+
+    // 7. ТУЛБАР
+    function buildToolbar() {
+      const tb = document.getElementById('toolbar');
+      tb.innerHTML = '';
+      [{id:'brush', icon:'🖌'}, {id:'eraser', icon:'⌫'}].forEach(t => {
+        const b = document.createElement('button');
+        b.className = 'tool' + (tool === t.id ? ' active' : '');
+        b.textContent = t.icon;
+        b.onclick = () => { tool = t.id; buildToolbar(); };
+        tb.appendChild(b);
+      });
+    }
+
+    // 8. РИСОВАНИЕ
+    function draw(e) {
+      if (!isDrawing) return;
+      const l = getActiveLayer();
+      if (!l) return;
+      const lctx = l.canvas.getContext('2d');
+      const r = cv.getBoundingClientRect();
+      const x = (e.clientX - r.left) * (cv.width / r.width);
+      const y = (e.clientY - r.top) * (cv.height / r.height);
+
+      lctx.lineTo(x, y);
+      lctx.lineWidth = brushSize;
+      lctx.lineCap = 'round';
+      lctx.lineJoin = 'round';
+      
+      if (tool === 'eraser') {
+        lctx.globalCompositeOperation = 'destination-out';
+        lctx.strokeStyle = 'rgba(0,0,0,1)';
+      } else {
+        lctx.globalCompositeOperation = 'source-over';
+        lctx.strokeStyle = color;
+      }
+      lctx.stroke();
+      render();
+    }
+
+    // 9. СОБЫТИЯ МЫШИ
+    cv.addEventListener('mousedown', e => {
+      isDrawing = true;
+      const r = cv.getBoundingClientRect();
+      const x = (e.clientX - r.left) * (cv.width / r.width);
+      const y = (e.clientY - r.top) * (cv.height / r.height);
+      const l = getActiveLayer();
+      const lctx = l.canvas.getContext('2d');
+      lctx.beginPath();
+      lctx.moveTo(x, y);
+    });
+    cv.addEventListener('mousemove', draw);
+    cv.addEventListener('mouseup', () => isDrawing = false);
+    cv.addEventListener('mouseleave', () => isDrawing = false);
+
+    // 10. КНОПКИ
+    document.getElementById('newBtn').onclick = () => newCanvas(960, 540);
+    document.getElementById('exportBtn').onclick = () => {
+      const a = document.createElement('a');
+      a.download = 'image.png';
+      a.href = cv.toDataURL();
+      a.click();
+    };
+
+    // 11. СТАРТ
+    newCanvas(960, 540);
+    buildToolbar();
+  </script>
+</body>
+</html>
