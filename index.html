@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8" />
-<title>Fusion Studio v2</title>
+<title>Fusion Studio v3</title>
 <style>
   *{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#111318;color:#e7e8ef;overflow:hidden;height:100vh}
   .app{display:flex;flex-direction:column;height:100vh} .topbar{height:52px;display:flex;align-items:center;padding:0 16px;background:#17191f;border-bottom:1px solid #292c35;gap:14px;flex:none}
@@ -12,6 +12,7 @@
   .btn:hover{background:#2e3140;color:#fff} .btn.primary{background:#7654d8;color:#fff} .btn:disabled{opacity:.35;cursor:not-allowed}
   .workspace{display:flex;flex:1;min-height:0} .toolbar{width:52px;background:#191b22;border-right:1px solid #292c35;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:6px;flex:none}
   .tool{width:34px;height:34px;border-radius:7px;display:grid;place-items:center;color:#8f92a0} .tool:hover{background:#292c37;color:#fff} .tool.active{background:#392e5e;color:#bda9ff;box-shadow:inset 0 0 0 1px #6650a8}
+  .tool svg{width:18px;height:18px;fill:currentColor}
   .center{flex:1;display:flex;flex-direction:column;min-width:0;background:#12141a} 
   .docbar{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#191b22;border-bottom:1px solid #292c35;font:10px 'Consolas',monospace;color:#858895}
   .stage{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;background-color:#15171e;background-image:radial-gradient(#2c2f3a 1px,transparent 1px);background-size:18px 18px;padding:20px}
@@ -30,9 +31,11 @@
   .dialog h2{margin:0 0 4px;font-size:17px} .presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
   .preset{background:#232630;border:1px solid #343745;border-radius:8px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:3px} .preset:hover{border-color:#7654d8;background:#2a2840} .preset b{font-size:11px} .preset span{font:9px 'Consolas',monospace;color:#8d90a0}
   .custom{display:flex;gap:6px;align-items:center;border-top:1px solid #2b2e38;padding-top:12px;font-size:11px;color:#8d90a0} .custom input{width:80px}
-  .palette{position:fixed;inset:0;background:#000b;display:grid;place-items:center;z-index:90} .palette-box{background:#1c1e26;border:1px solid #343745;border-radius:12px;padding:16px;width:280px;text-align:center}
-  .wheel-wrap{position:relative;width:220px;height:220px;margin:0 auto 10px} .wheel{width:220px;height:220px;border-radius:50%;cursor:crosshair;position:relative;box-shadow:0 0 0 2px #343745;background:radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 70%),conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
-  .wheel-marker{position:absolute;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #000;transform:translate(-50%,-50%);pointer-events:none}
+  
+  /* Встроенная палитра */
+  .wheel-wrap{position:relative;width:160px;height:160px;margin:10px auto} 
+  .wheel{width:160px;height:160px;border-radius:50%;cursor:crosshair;position:relative;box-shadow:0 0 0 2px #343745;background:radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 70%),conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+  .wheel-marker{position:absolute;width:12px;height:12px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #000;transform:translate(-50%,-50%);pointer-events:none}
 </style>
 </head>
 <body>
@@ -52,48 +55,44 @@
       <div class="status"><span>ГОТОВО</span><span id="toolLabel">Кисть</span></div>
     </div>
     <div class="right">
+      <!-- Слои -->
       <div class="section"><div class="heading">СЛОИ <button class="btn" id="addLayer" style="padding:2px 6px">+</button></div><div id="layersList"></div></div>
+      
+      <!-- Свойства -->
       <div class="section" id="propsPS">
-        <div class="heading">СВОЙСТВА</div>
-        <div class="label-row">Непрозрачность слоя <span><input type="number" class="num-input" id="opacityNum" min="0" max="100" value="100" /> %</span></div>
-        <input type="range" id="opacityRange" min="0" max="100" value="100" />
-        <div class="label-row">Кисть</div>
-        <select id="brushType">
-          <option value="soft">🖌 Мягкая</option>
-          <option value="pencil">✏️ Карандаш</option>
-          <option value="pen">🖊 Ручка</option>
-          <option value="marker">🖍 Маркер</option>
-          <option value="neon">✨ Неон</option>
-          <option value="pixel">🟩 Пиксель</option>
-        </select>
+        <div class="heading">СВОЙСТВА КИСТИ</div>
+        
         <div class="label-row">Размер кисти <span><input type="number" class="num-input" id="brushNum" min="1" max="500" value="12" /> px</span></div>
         <input type="range" id="brushRange" min="1" max="500" value="12" />
+
+        <div class="label-row">Прозрачность кисти <span><input type="number" class="num-input" id="brushAlphaNum" min="0" max="100" value="100" /> %</span></div>
+        <input type="range" id="brushAlphaRange" min="0" max="100" value="100" />
+
+        <div class="label-row">Тип кисти</div>
+        <select id="brushType">
+          <option value="soft">Мягкая</option>
+          <option value="pencil">Карандаш</option>
+          <option value="pen">Ручка</option>
+          <option value="marker">Маркер (плоский)</option>
+          <option value="neon">Неон</option>
+          <option value="pixel">Пиксель</option>
+        </select>
+
+        <div class="label-row">Прозрачность слоя</div>
+        <input type="range" id="layerOpacityRange" min="0" max="100" value="100" />
+
         <div class="label-row">Цвет</div>
-        <div style="display:flex;gap:6px;align-items:center;margin-top:5px">
-          <button class="btn" id="openPaletteBtn" style="flex:1;justify-content:center;background:#232630">🎨 Палитра</button>
-        </div>
+        <div class="wheel-wrap"><div class="wheel" id="wheel"></div><div class="wheel-marker" id="wheelMarker" style="left:50%;top:50%;background:#a78bfa"></div></div>
       </div>
     </div>
   </div>
 </div>
 <div class="overlay" id="newOverlay"><div class="dialog"><h2>Новый проект</h2><div class="presets" id="presets"></div><div class="custom"><span>Свой размер:</span><input type="number" id="customW" value="960" /><span>×</span><input type="number" id="customH" value="540" /><button class="btn primary" id="customCreate">Создать</button></div></div></div>
 
-<!-- Круговая палитра -->
-<div class="palette" id="paletteOverlay" style="display:none">
-  <div class="palette-box">
-    <div class="wheel-wrap"><div class="wheel" id="wheel"></div><div class="wheel-marker" id="wheelMarker" style="left:50%;top:50%;background:#a78bfa"></div></div>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <input type="color" id="colorPicker" value="#a78bfa" style="width:40px;height:30px;background:none;border:none;cursor:pointer">
-      <span id="hexLabel" style="font:11px 'Consolas',monospace;color:#c9cbd5">#A78BFA</span>
-    </div>
-    <button class="btn primary" id="paletteDone" style="width:100%;justify-content:center">Готово</button>
-  </div>
-</div>
-
 <script>
 (() => {
   const cv = document.getElementById('cv'); const ctx = cv.getContext('2d'); const stage = document.getElementById('stage');
-  let state = { tool: 'brush', brushSize: 12, brushType: 'soft', color: '#a78bfa', layers: [], activeId: null, drawing: false, prevMouse: null, zoom: 1 };
+  let state = { tool: 'brush', brushSize: 12, brushAlpha: 1, brushType: 'soft', color: '#a78bfa', layers: [], activeId: null, drawing: false, prevMouse: null, zoom: 1 };
 
   const makeCanvas = (w,h) => { const c=document.createElement('canvas'); c.width=w; c.height=h; return c; };
   const mkLayer = (name,w,h) => ({ id: Date.now()+Math.random(), name, canvas: makeCanvas(w,h), visible: true, opacity: 1 });
@@ -117,8 +116,7 @@
     if (state.tool === 'picker') { 
       const d = ctx.getImageData(Math.floor(p.x), Math.floor(p.y), 1, 1).data;
       state.color = '#' + [d[0],d[1],d[2]].map(v => v.toString(16).padStart(2,'0')).join('');
-      document.getElementById('colorPicker').value = state.color;
-      document.getElementById('hexLabel').textContent = state.color.toUpperCase();
+      updateColorUI();
     }
   });
   cv.addEventListener('mousemove', e => {
@@ -136,8 +134,10 @@
       lctx.globalCompositeOperation = 'destination-out'; lctx.strokeStyle = 'rgba(0,0,0,1)';
     } else {
       lctx.globalCompositeOperation = 'source-over'; lctx.strokeStyle = state.color;
+      lctx.globalAlpha = state.brushAlpha;
+      
       if (state.brushType === 'neon') { lctx.shadowColor = state.color; lctx.shadowBlur = 15; }
-      if (state.brushType === 'marker') { lctx.globalAlpha = 0.5; }
+      if (state.brushType === 'marker') { lctx.lineWidth = state.brushSize * 1.5; } // Маркер шире и плоский
     }
     
     if (state.brushType === 'pixel' && state.tool !== 'eraser') { 
@@ -192,7 +192,7 @@
     document.getElementById('newOverlay').style.display = 'none';
     updateLayersUI(); render();
   };
-  
+
   document.getElementById('customCreate').onclick = () => { const w = +document.getElementById('customW').value, h = +document.getElementById('customH').value; if (w>0 && h>0) createNewCanvas(w,h); };
   document.getElementById('newBtn').onclick = () => document.getElementById('newOverlay').style.display = 'grid';
   document.getElementById('presets').innerHTML = '';
@@ -201,19 +201,22 @@
   document.getElementById('addLayer').onclick = () => { const l = mkLayer('Слой ' + (state.layers.length+1), cv.width, cv.height); state.layers.push(l); state.activeId = l.id; updateLayersUI(); render(); };
   document.getElementById('exportBtn').onclick = () => { const a = document.createElement('a'); a.download = 'fusion.png'; a.href = cv.toDataURL('image/png'); a.click(); };
 
-  // НАСТРОЙКИ
+  // НАСТРОЙКИ КИСТИ
   document.getElementById('brushRange').oninput = (e) => { state.brushSize = +e.target.value; document.getElementById('brushNum').value = e.target.value; };
   document.getElementById('brushNum').oninput = (e) => { state.brushSize = +e.target.value; document.getElementById('brushRange').value = e.target.value; };
-  document.getElementById('brushType').onchange = (e) => { state.brushType = e.target.value; };
-  document.getElementById('opacityRange').oninput = (e) => { const l = getLayer(); if(l){ l.opacity = +e.target.value / 100; document.getElementById('opacityNum').value = e.target.value; render(); } };
-  document.getElementById('opacityNum').oninput = (e) => { const l = getLayer(); if(l){ l.opacity = +e.target.value / 100; document.getElementById('opacityRange').value = e.target.value; render(); } };
-
-  // ПАЛИТРА
-  document.getElementById('colorPicker').oninput = (e) => { state.color = e.target.value; document.getElementById('hexLabel').textContent = state.color.toUpperCase(); };
-  document.getElementById('openPaletteBtn').onclick = () => { document.getElementById('paletteOverlay').style.display = 'grid'; };
-  document.getElementById('paletteDone').onclick = () => { document.getElementById('paletteOverlay').style.display = 'none'; };
   
+  document.getElementById('brushAlphaRange').oninput = (e) => { state.brushAlpha = +e.target.value / 100; document.getElementById('brushAlphaNum').value = e.target.value; };
+  document.getElementById('brushAlphaNum').oninput = (e) => { state.brushAlpha = +e.target.value / 100; document.getElementById('brushAlphaRange').value = e.target.value; };
+
+  document.getElementById('brushType').onchange = (e) => { state.brushType = e.target.value; };
+  
+  document.getElementById('layerOpacityRange').oninput = (e) => { const l = getLayer(); if(l){ l.opacity = +e.target.value / 100; render(); } };
+
+  // ПАЛИТРА (ВСТРОЕННАЯ)
   const wheel = document.getElementById('wheel');
+  const updateColorUI = () => {
+    document.getElementById('wheelMarker').style.background = state.color;
+  };
   wheel.addEventListener('click', (e) => {
     const r = wheel.getBoundingClientRect();
     const cx = r.left + r.width/2, cy = r.top + r.height/2;
@@ -228,11 +231,9 @@
     else if (angle<300)[r2,g2,b2]=[x,0,c]; else [r2,g2,b2]=[c,0,x];
     const blend = (val) => Math.round((val*s + (1-s))*255);
     state.color = '#' + [blend(r2),blend(g2),blend(b2)].map(v => v.toString(16).padStart(2,'0')).join('');
-    document.getElementById('colorPicker').value = state.color;
-    document.getElementById('hexLabel').textContent = state.color.toUpperCase();
     document.getElementById('wheelMarker').style.left = (50 + Math.cos((angle-90)*Math.PI/180)*s*50) + '%';
     document.getElementById('wheelMarker').style.top = (50 + Math.sin((angle-90)*Math.PI/180)*s*50) + '%';
-    document.getElementById('wheelMarker').style.background = state.color;
+    updateColorUI();
   });
 
   // ЗУМ
@@ -245,11 +246,17 @@
     }
   }, { passive: false });
 
-  // ТУЛБАР
+  // ТУЛБАР С SVG ИКОНКАМИ
   const buildToolbar = () => {
     const tb = document.getElementById('toolbar'); tb.innerHTML = '';
-    [{id:'brush', label:'Кисть', icon:'🖌'}, {id:'eraser', label:'Ластик', icon:'⌫'}, {id:'fill', label:'Заливка', icon:'🪣'}, {id:'picker', label:'Пипетка', icon:'💧'}].forEach(t => {
-      const b = document.createElement('button'); b.className = 'tool' + (state.tool === t.id ? ' active' : ''); b.textContent = t.icon;
+    const icons = {
+      brush: '<svg viewBox="0 0 24 24"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a.996.996 0 00-1.41 0L9 12.25 11.75 15l8.96-8.96a.996.996 0 000-1.41z"/></svg>',
+      eraser: '<svg viewBox="0 0 24 24"><path d="M16.24 3.56l4.95 4.95c.78.78.78 2.05 0 2.83L12 20.54l-5.66-5.66L16.24 3.56M7.05 16.07l3.54 3.54H4.5l-1.95-1.95 1.41-1.41 3.09-.18z"/></svg>',
+      fill: '<svg viewBox="0 0 24 24"><path d="M16.56 8.94L7.62 0 6.21 1.41l2.38 2.38-5.15 5.15c-.59.59-.59 1.54 0 2.12l5.5 5.5c.29.29.68.44 1.06.44s.77-.15 1.06-.44l5.5-5.5c.59-.58.59-1.53 0-2.12zM5.21 10L10 5.21 14.79 10H5.21zM19 11.5s-2 2.17-2 3.5c0 1.1.9 2 2 2s2-.9 2-2c0-1.33-2-3.5-2-3.5z"/></svg>',
+      picker: '<svg viewBox="0 0 24 24"><path d="M20.71 5.63l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-3.12 3.12-1.93-1.91-1.41 1.41 1.42 1.42L3 16.25V21h4.75l9.92-9.92 1.42 1.42 1.41-1.41-1.92-1.92 3.12-3.12c.39-.39.39-1.02 0-1.41zM6.92 19L5 17.08l8.06-8.06 1.92 1.92L6.92 19z"/></svg>'
+    };
+    [{id:'brush', label:'Кисть'}, {id:'eraser', label:'Ластик'}, {id:'fill', label:'Заливка'}, {id:'picker', label:'Пипетка'}].forEach(t => {
+      const b = document.createElement('button'); b.className = 'tool' + (state.tool === t.id ? ' active' : ''); b.innerHTML = icons[t.id];
       b.title = t.label;
       b.onclick = () => { state.tool = t.id; buildToolbar(); document.getElementById('toolLabel').textContent = t.label; }; tb.appendChild(b);
     });
