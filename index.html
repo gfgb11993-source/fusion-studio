@@ -4,159 +4,177 @@
 <meta charset="utf-8" />
 <title>Fusion Studio</title>
 <style>
-  body{margin:0;background:#111318;color:#fff;font-family:sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column}
-  .topbar{height:50px;background:#17191f;border-bottom:1px solid #333;display:flex;align-items:center;padding:0 15px;gap:10px}
-  .btn{padding:6px 12px;background:#232630;color:#ccc;border:1px solid #444;border-radius:4px;cursor:pointer;font-size:12px}
-  .btn:hover{background:#333}
-  .btn.primary{background:#7654d8;border-color:#7654d8;color:#fff}
-  .workspace{display:flex;flex:1}
-  .toolbar{width:50px;background:#191b22;border-right:1px solid #333;display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:5px}
-  .tool{width:34px;height:34px;border-radius:5px;background:transparent;color:#888;border:none;cursor:pointer;font-size:18px;display:grid;place-items:center}
-  .tool.active{background:#392e5e;color:#bda9ff}
-  .center{flex:1;display:flex;align-items:center;justify-content:center;background:#15171e;padding:20px}
-  canvas{box-shadow:0 10px 30px #000;border:1px solid #333;background:#000;cursor:crosshair}
-  .right{width:250px;background:#191b22;border-left:1px solid #333;padding:15px}
-  .layer{height:30px;background:#232630;border-radius:4px;margin-bottom:5px;display:flex;align-items:center;padding:0 10px;font-size:12px;cursor:pointer}
-  .layer.selected{background:#302844;color:#e2d8ff}
+  *{box-sizing:border-box} body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:#111318;color:#e7e8ef;overflow:hidden;height:100vh}
+  .app{display:flex;flex-direction:column;height:100vh} .topbar{height:52px;display:flex;align-items:center;padding:0 16px;background:#17191f;border-bottom:1px solid #292c35;gap:14px;flex:none}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:1.5px;font-size:12px} .brand b{color:#a78bfa} .mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#8b5cf6,#4f46e5);display:grid;place-items:center}
+  .actions{margin-left:auto;display:flex;gap:6px} button{font:inherit;color:inherit;border:0;cursor:pointer;background:transparent} 
+  .btn{padding:7px 12px;border-radius:6px;background:#232630;color:#c9cbd5;font-size:11px;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{background:#2e3140;color:#fff} .btn.primary{background:#7654d8;color:#fff} .btn:disabled{opacity:.35;cursor:not-allowed}
+  .workspace{display:flex;flex:1;min-height:0} .toolbar{width:52px;background:#191b22;border-right:1px solid #292c35;display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:6px;flex:none}
+  .tool{width:34px;height:34px;border-radius:7px;display:grid;place-items:center;color:#8f92a0} .tool:hover{background:#292c37;color:#fff} .tool.active{background:#392e5e;color:#bda9ff;box-shadow:inset 0 0 0 1px #6650a8}
+  .center{flex:1;display:flex;flex-direction:column;min-width:0;background:#12141a} 
+  .docbar{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;background:#191b22;border-bottom:1px solid #292c35;font:10px 'Consolas',monospace;color:#858895}
+  .stage{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;background-color:#15171e;background-image:radial-gradient(#2c2f3a 1px,transparent 1px);background-size:18px 18px;padding:20px}
+  .canvas-frame{box-shadow:0 15px 55px #0009;border:1px solid #3a3d49;background:#000;transform-origin:center center;transition:transform 0.1s} 
+  canvas{display:block;max-width:100%;max-height:100%;cursor:crosshair}
+  .right{width:260px;background:#191b22;border-left:1px solid #2b2e38;display:flex;flex-direction:column;overflow-y:auto;flex:none} 
+  .section{padding:12px;border-bottom:1px solid #2b2e38}
+  .heading{display:flex;justify-content:space-between;align-items:center;font:9px 'Consolas',monospace;letter-spacing:1px;color:#8d90a0;margin-bottom:8px}
+  .layer{height:30px;display:flex;align-items:center;gap:6px;padding:0 6px;border-radius:5px;color:#aeb0bb;font-size:11px;cursor:pointer} .layer:hover{background:#242731} .layer.selected{background:#302844;color:#e2d8ff}
+  .label-row{display:flex;justify-content:space-between;align-items:center;margin:10px 0 4px;color:#858895;font-size:10px}
+  input[type=range]{width:100%;accent-color:#9b7af2} 
+  input[type=number],select{width:100%;background:#232630;border:1px solid #30333e;color:#e7e8ef;padding:5px 7px;border-radius:5px;font:10px 'Consolas',monospace;outline:none}
+  .num-input{width:56px;background:#232630;border:1px solid #30333e;color:#e7e8ef;padding:3px 6px;border-radius:4px;font:10px 'Consolas',monospace;outline:none;text-align:right}
+  .status{height:22px;flex:none;display:flex;align-items:center;gap:16px;padding:0 12px;background:#17191f;border-top:1px solid #292c35;font:9px 'Consolas',monospace;color:#777b88}
+  .overlay{position:fixed;inset:0;background:#000c;display:grid;place-items:center;z-index:100} .dialog{background:#1c1e26;border:1px solid #343745;border-radius:14px;padding:22px;width:560px;max-width:92vw;}
+  .dialog h2{margin:0 0 4px;font-size:17px} .presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .preset{background:#232630;border:1px solid #343745;border-radius:8px;padding:10px;text-align:left;display:flex;flex-direction:column;gap:3px} .preset:hover{border-color:#7654d8;background:#2a2840} .preset b{font-size:11px} .preset span{font:9px 'Consolas',monospace;color:#8d90a0}
+  .custom{display:flex;gap:6px;align-items:center;border-top:1px solid #2b2e38;padding-top:12px;font-size:11px;color:#8d90a0} .custom input{width:80px}
 </style>
 </head>
 <body>
+<div class="app">
   <div class="topbar">
-    <span style="font-weight:bold;font-size:14px;">FUSION STUDIO</span>
-    <button class="btn" id="newBtn" style="margin-left:auto">Новый холст</button>
-    <button class="btn primary" id="exportBtn">PNG</button>
+    <div class="brand"><div class="mark">✦</div><span>FUSION <b>STUDIO</b></span></div>
+    <div class="actions">
+      <button class="btn" id="newBtn">Новый</button>
+      <button class="btn" id="undoBtn" disabled>↶</button><button class="btn" id="redoBtn" disabled>↷</button>
+      <button class="btn primary" id="exportBtn">PNG</button>
+    </div>
   </div>
   <div class="workspace">
     <div class="toolbar" id="toolbar"></div>
     <div class="center">
-      <canvas id="cv" width="960" height="540"></canvas>
+      <div class="docbar"><span id="sizeLabel">960 × 540</span><span id="zoomLabel">100%</span><span>Fusion Studio</span></div>
+      <div class="stage" id="stage"><div class="canvas-frame" id="canvasFrame"><canvas id="cv" width="960" height="540"></canvas></div></div>
+      <div class="status"><span>ГОТОВО</span><span id="toolLabel">Кисть</span></div>
     </div>
     <div class="right">
-      <h4 style="margin:0 0 10px 0;font-size:12px;color:#888">СЛОИ</h4>
-      <div id="layersList"></div>
+      <div class="section"><div class="heading">СЛОИ <button class="btn" id="addLayer" style="padding:2px 6px">+</button></div><div id="layersList"></div></div>
+      <div class="section" id="propsPS">
+        <div class="heading">СВОЙСТВА</div>
+        <div class="label-row">Непрозрачность слоя <span><input type="number" class="num-input" id="opacityNum" min="0" max="100" value="100" /> %</span></div><input type="range" id="opacityRange" min="0" max="100" value="100" />
+        <div class="label-row">Кисть</div>
+        <select id="brushType">
+          <option value="soft">🖌 Мягкая</option>
+          <option value="pencil">✏️ Карандаш</option>
+          <option value="pen">🖊 Ручка</option>
+          <option value="neon">✨ Неон</option>
+          <option value="pixel">🟩 Пиксель</option>
+        </select>
+        <div class="label-row">Размер кисти <span><input type="number" class="num-input" id="brushNum" min="1" max="1000" value="12" /> px</span></div><input type="range" id="brushRange" min="1" max="1000" value="12" />
+        <div class="label-row">Цвет</div><div style="display:flex;align-items:center;gap:6px"><input type="color" id="colorPicker" value="#a78bfa" style="width:100%;height:30px;background:none;border:none;cursor:pointer;"></div>
+      </div>
     </div>
   </div>
-  <!-- Сюда мы будем добавлять скрипты -->
-  <script>
-    // 1. НАСТРОЙКИ
-    const cv = document.getElementById('cv');
-    const ctx = cv.getContext('2d');
-    let tool = 'brush';
-    let brushSize = 10;
-    let color = '#a78bfa';
-    let isDrawing = false;
-    let layers = [];
-    let activeLayerId = null;
+</div>
+<div class="overlay" id="newOverlay"><div class="dialog"><h2>Новый проект</h2><div class="presets" id="presets"></div><div class="custom"><span>Свой размер:</span><input type="number" id="customW" value="960" /><span>×</span><input type="number" id="customH" value="540" /><button class="btn primary" id="customCreate">Создать</button></div></div></div>
+<script>
+(() => {
+  const cv = document.getElementById('cv'); const ctx = cv.getContext('2d'); const stage = document.getElementById('stage');
+  let state = { tool: 'brush', brushSize: 12, brushType: 'soft', color: '#a78bfa', layers: [], activeId: null, drawing: false, prevMouse: null, zoom: 1 };
+  const makeCanvas = (w,h) => { const c=document.createElement('canvas'); c.width=w; c.height=h; return c; };
+  const mkLayer = (name,w,h) => ({ id: Date.now()+Math.random(), name, canvas: makeCanvas(w,h), visible: true, opacity: 1 });
 
-    // 2. СОЗДАНИЕ СЛОЯ
-    function createLayer(name) {
-      const c = document.createElement('canvas');
-      c.width = cv.width;
-      c.height = cv.height;
-      return { id: Date.now() + Math.random(), name: name, canvas: c, visible: true };
+  const getLayer = () => state.layers.find(l => l.id === state.activeId) || state.layers[0];
+  
+  const render = () => {
+    ctx.clearRect(0,0,cv.width,cv.height); ctx.fillStyle = '#20232c'; ctx.fillRect(0,0,cv.width,cv.height);
+    for (const l of state.layers) { if (l.visible) { ctx.globalAlpha = l.opacity; ctx.drawImage(l.canvas, 0, 0); } }
+    ctx.globalAlpha = 1;
+  };
+
+  const point = (e) => { const r = cv.getBoundingClientRect(); return { x: (e.clientX - r.left) * (cv.width / r.width), y: (e.clientY - r.top) * (cv.height / r.height) }; };
+
+  cv.addEventListener('mousedown', e => {
+    const p = point(e); const l = getLayer(); if (!l) return;
+    if (state.tool === 'brush' || state.tool === 'eraser') { 
+      state.drawing = true; state.prevMouse = p; draw(p, p); 
+      document.getElementById('undoBtn').disabled = false;
     }
+  });
+  cv.addEventListener('mousemove', e => {
+    const p = point(e);
+    if (state.drawing && state.prevMouse) { draw(state.prevMouse, p); state.prevMouse = p; }
+  });
+  cv.addEventListener('mouseup', () => { state.drawing = false; state.prevMouse = null; });
 
-    // 3. НОВЫЙ ХОЛСТ
-    function newCanvas(w, h) {
-      cv.width = w; cv.height = h;
-      layers = [createLayer('Фон')];
-      activeLayerId = layers[0].id;
-      updateLayersUI();
-      render();
+  const draw = (from, to) => {
+    const l = getLayer(); if (!l) return; const lctx = l.canvas.getContext('2d');
+    lctx.save(); 
+    lctx.lineWidth = state.brushSize; lctx.lineCap = 'round'; lctx.lineJoin = 'round';
+    
+    if (state.tool === 'eraser') {
+      lctx.globalCompositeOperation = 'destination-out'; lctx.strokeStyle = 'rgba(0,0,0,1)';
+    } else {
+      lctx.globalCompositeOperation = 'source-over'; lctx.strokeStyle = state.color;
+      if (state.brushType === 'neon') { lctx.shadowColor = state.color; lctx.shadowBlur = 15; }
     }
-
-    // 4. ОТРИСОВКА
-    function render() {
-      ctx.clearRect(0, 0, cv.width, cv.height);
-      ctx.fillStyle = '#20232c';
-      ctx.fillRect(0, 0, cv.width, cv.height);
-      layers.forEach(l => { if (l.visible) ctx.drawImage(l.canvas, 0, 0); });
+    
+    if (state.brushType === 'pixel' && state.tool !== 'eraser') { 
+      lctx.fillStyle = state.color; 
+      lctx.fillRect(to.x, to.y, state.brushSize, state.brushSize); 
+    } else { 
+      lctx.beginPath(); lctx.moveTo(from.x, from.y); lctx.lineTo(to.x, to.y); lctx.stroke(); 
     }
+    lctx.restore();
+    render();
+  };
 
-    // 5. ПОЛУЧЕНИЕ АКТИВНОГО СЛОЯ
-    function getActiveLayer() {
-      return layers.find(l => l.id === activeLayerId) || layers[0];
-    }
-
-    // 6. ИНТЕРФЕЙС СЛОЕВ
-    function updateLayersUI() {
-      const list = document.getElementById('layersList');
-      list.innerHTML = '';
-      [...layers].reverse().forEach(l => {
-        const el = document.createElement('div');
-        el.className = 'layer' + (l.id === activeLayerId ? ' selected' : '');
-        el.textContent = l.name;
-        el.onclick = () => { activeLayerId = l.id; updateLayersUI(); };
-        list.appendChild(el);
-      });
-    }
-
-    // 7. ТУЛБАР
-    function buildToolbar() {
-      const tb = document.getElementById('toolbar');
-      tb.innerHTML = '';
-      [{id:'brush', icon:'🖌'}, {id:'eraser', icon:'⌫'}].forEach(t => {
-        const b = document.createElement('button');
-        b.className = 'tool' + (tool === t.id ? ' active' : '');
-        b.textContent = t.icon;
-        b.onclick = () => { tool = t.id; buildToolbar(); };
-        tb.appendChild(b);
-      });
-    }
-
-    // 8. РИСОВАНИЕ
-    function draw(e) {
-      if (!isDrawing) return;
-      const l = getActiveLayer();
-      if (!l) return;
-      const lctx = l.canvas.getContext('2d');
-      const r = cv.getBoundingClientRect();
-      const x = (e.clientX - r.left) * (cv.width / r.width);
-      const y = (e.clientY - r.top) * (cv.height / r.height);
-
-      lctx.lineTo(x, y);
-      lctx.lineWidth = brushSize;
-      lctx.lineCap = 'round';
-      lctx.lineJoin = 'round';
-      
-      if (tool === 'eraser') {
-        lctx.globalCompositeOperation = 'destination-out';
-        lctx.strokeStyle = 'rgba(0,0,0,1)';
-      } else {
-        lctx.globalCompositeOperation = 'source-over';
-        lctx.strokeStyle = color;
-      }
-      lctx.stroke();
-      render();
-    }
-
-    // 9. СОБЫТИЯ МЫШИ
-    cv.addEventListener('mousedown', e => {
-      isDrawing = true;
-      const r = cv.getBoundingClientRect();
-      const x = (e.clientX - r.left) * (cv.width / r.width);
-      const y = (e.clientY - r.top) * (cv.height / r.height);
-      const l = getActiveLayer();
-      const lctx = l.canvas.getContext('2d');
-      lctx.beginPath();
-      lctx.moveTo(x, y);
+  const updateLayersUI = () => {
+    const list = document.getElementById('layersList'); list.innerHTML = '';
+    [...state.layers].reverse().forEach(l => {
+      const row = document.createElement('div'); row.className = 'layer' + (l.id===state.activeId?' selected':'');
+      row.innerHTML = `<span style="flex:1">${l.name}</span>`;
+      row.onclick = () => { state.activeId = l.id; updateLayersUI(); }; list.appendChild(row);
     });
-    cv.addEventListener('mousemove', draw);
-    cv.addEventListener('mouseup', () => isDrawing = false);
-    cv.addEventListener('mouseleave', () => isDrawing = false);
+  };
 
-    // 10. КНОПКИ
-    document.getElementById('newBtn').onclick = () => newCanvas(960, 540);
-    document.getElementById('exportBtn').onclick = () => {
-      const a = document.createElement('a');
-      a.download = 'image.png';
-      a.href = cv.toDataURL();
-      a.click();
-    };
+  const createNewCanvas = (w, h) => {
+    cv.width = w; cv.height = h; document.getElementById('sizeLabel').textContent = w + ' × ' + h;
+    const bg = mkLayer('Фон', w, h); state.layers = [bg]; state.activeId = bg.id;
+    document.getElementById('newOverlay').style.display = 'none';
+    updateLayersUI(); render();
+  };
+  
+  document.getElementById('customCreate').onclick = () => { const w = +document.getElementById('customW').value, h = +document.getElementById('customH').value; if (w>0 && h>0) createNewCanvas(w,h); };
+  document.getElementById('newBtn').onclick = () => document.getElementById('newOverlay').style.display = 'grid';
+  document.getElementById('presets').innerHTML = '';
+  [{name:"Full HD", w:1920, h:1080},{name:"HD", w:1280, h:720},{name:"Квадрат", w:1080, h:1080}].forEach(p => { const b = document.createElement('button'); b.className = 'preset'; b.innerHTML = `<b>${p.name}</b><span>${p.w} × ${p.h}</span>`; b.onclick = () => createNewCanvas(p.w, p.h); document.getElementById('presets').appendChild(b); });
 
-    // 11. СТАРТ
-    newCanvas(960, 540);
-    buildToolbar();
-  </script>
+  document.getElementById('addLayer').onclick = () => { const l = mkLayer('Слой ' + (state.layers.length+1), cv.width, cv.height); state.layers.push(l); state.activeId = l.id; updateLayersUI(); render(); };
+  document.getElementById('exportBtn').onclick = () => { const a = document.createElement('a'); a.download = 'fusion.png'; a.href = cv.toDataURL('image/png'); a.click(); };
+
+  document.getElementById('brushRange').oninput = (e) => { state.brushSize = +e.target.value; document.getElementById('brushNum').value = e.target.value; };
+  document.getElementById('brushNum').oninput = (e) => { state.brushSize = +e.target.value; document.getElementById('brushRange').value = e.target.value; };
+  document.getElementById('brushType').onchange = (e) => { state.brushType = e.target.value; };
+  document.getElementById('colorPicker').oninput = (e) => { state.color = e.target.value; };
+  
+  // ЗУМ
+  stage.addEventListener('wheel', (e) => { 
+    if (e.ctrlKey) {
+      e.preventDefault(); 
+      state.zoom = Math.max(0.1, Math.min(20, state.zoom * (e.deltaY > 0 ? 0.9 : 1.1))); 
+      document.getElementById('canvasFrame').style.transform = `scale(${state.zoom})`; 
+      document.getElementById('zoomLabel').textContent = Math.round(state.zoom * 100) + '%'; 
+    }
+  }, { passive: false });
+
+  const buildToolbar = () => {
+    const tb = document.getElementById('toolbar'); tb.innerHTML = '';
+    [{id:'brush', label:'Кисть', icon:'🖌'}, {id:'eraser', label:'Ластик', icon:'⌫'}].forEach(t => {
+      const b = document.createElement('button'); b.className = 'tool' + (state.tool === t.id ? ' active' : ''); b.textContent = t.icon;
+      b.title = t.label;
+      b.onclick = () => { state.tool = t.id; buildToolbar(); document.getElementById('toolLabel').textContent = t.label; }; tb.appendChild(b);
+    });
+  };
+
+  // === ИНИЦИАЛИЗАЦИЯ ===
+  // Сначала создаем холст и слои, чтобы функции не падали
+  createNewCanvas(960, 540); 
+  // Потом строим тулбар
+  buildToolbar();
+})();
+</script>
 </body>
 </html>
